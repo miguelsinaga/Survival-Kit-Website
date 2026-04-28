@@ -46,7 +46,7 @@ async function main() {
     db = new SQL.Database();
   }
 
-  
+  // tables
   db.run(`CREATE TABLE IF NOT EXISTS profile (id INTEGER PRIMARY KEY DEFAULT 1, nama TEXT DEFAULT '', email TEXT DEFAULT '', nik TEXT DEFAULT '', telepon TEXT DEFAULT '', alamat TEXT DEFAULT '', golongan_darah TEXT DEFAULT '')`);
   db.run(`CREATE TABLE IF NOT EXISTS emergency_contacts (id INTEGER PRIMARY KEY AUTOINCREMENT, nama TEXT NOT NULL, label TEXT DEFAULT 'Keluarga', telepon TEXT NOT NULL)`);
   db.run(`CREATE TABLE IF NOT EXISTS documents (id INTEGER PRIMARY KEY AUTOINCREMENT, nama TEXT NOT NULL, status TEXT DEFAULT 'belum', tanggal TEXT)`);
@@ -56,7 +56,7 @@ async function main() {
   db.run(`CREATE TABLE IF NOT EXISTS alerts (id INTEGER PRIMARY KEY AUTOINCREMENT, judul TEXT NOT NULL, deskripsi TEXT NOT NULL, level TEXT DEFAULT 'warning', waktu TEXT DEFAULT (datetime('now','localtime')), dibaca INTEGER DEFAULT 0)`);
   db.run(`CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT DEFAULT '')`);
 
- 
+
   const count = get("SELECT COUNT(*) as c FROM checklist_items");
   if (!count || count.c === 0) {
     db.run(`INSERT OR IGNORE INTO profile (id,nama,email,nik,telepon,alamat,golongan_darah) VALUES (1,'Rahmi Aulia','rahmi.aulia@gmail.com','3201xxxxxxxxxxxx','+62 812 xxxx xxxx','Bogor, Jawa Barat','O+')`);
@@ -69,6 +69,7 @@ async function main() {
     db.run("INSERT OR IGNORE INTO settings (key,value) VALUES ('location_sharing','true')");
     saveDB();
   }
+
 
 
   app.get("/api/status", (req, res) => {
@@ -135,7 +136,7 @@ async function main() {
 
   app.get("*", (req, res) => { res.sendFile(path.join(__dirname,"..","frontend","index.html")); });
 
-  app.listen(PORT, () => { console.log(`\n  Web berjalan di http://localhost:${PORT}\n`); });
+  app.listen(PORT, () => { console.log(`\n  🎒 PrepKit berjalan di http://localhost:${PORT}\n`); });
 }
 
 main().catch(err => { console.error("Failed to start:", err); process.exit(1); });

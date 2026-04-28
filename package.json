@@ -1,7 +1,7 @@
 {
-  "name": "prepkit",
+  "name": "Maison Safe",
   "version": "1.0.0",
-  "description": "Emergency Preparedness Kit Tracker — PrepKit",
+  "description": "Maison Safe - emergency survival kit",
   "main": "backend/server.js",
   "scripts": {
     "start": "node backend/server.js",
