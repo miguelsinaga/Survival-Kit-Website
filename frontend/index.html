@@ -11,7 +11,37 @@
 <body>
 <div class="app">
 
-  <div class="screen active" id="screen-home">
+  <div class="screen active" id="screen-auth">
+    <div style="height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:20px;">
+      <div style="text-align:center;max-width:400px;">
+        <h1 style="font-size:32px;margin-bottom:8px;">🎒 Maison Safe</h1>
+        <p style="color:var(--gray-500);margin-bottom:32px;">Emergency Survival Kit</p>
+
+        <div id="auth-login" style="display:block;">
+          <h2 style="font-size:24px;margin-bottom:24px;">Sign In</h2>
+          <input type="email" id="login-email" placeholder="Email" style="width:100%;padding:12px;margin-bottom:12px;border:1px solid var(--gray-300);border-radius:8px;font-size:16px;box-sizing:border-box;">
+          <input type="password" id="login-password" placeholder="Password" style="width:100%;padding:12px;margin-bottom:24px;border:1px solid var(--gray-300);border-radius:8px;font-size:16px;box-sizing:border-box;">
+          <button onclick="handleSignIn()" style="width:100%;padding:12px;background:var(--blue-600);color:white;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;margin-bottom:12px;">Sign In</button>
+          <p style="color:var(--gray-500);margin-bottom:8px;">Don't have an account?</p>
+          <button onclick="switchAuthTab('signup')" style="width:100%;padding:12px;background:var(--gray-100);color:var(--gray-700);border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;">Create Account</button>
+          <div id="login-error" style="color:var(--red-600);margin-top:16px;font-size:14px;display:none;"></div>
+        </div>
+
+        <div id="auth-signup" style="display:none;">
+          <h2 style="font-size:24px;margin-bottom:24px;">Create Account</h2>
+          <input type="text" id="signup-name" placeholder="Full Name" style="width:100%;padding:12px;margin-bottom:12px;border:1px solid var(--gray-300);border-radius:8px;font-size:16px;box-sizing:border-box;">
+          <input type="email" id="signup-email" placeholder="Email" style="width:100%;padding:12px;margin-bottom:12px;border:1px solid var(--gray-300);border-radius:8px;font-size:16px;box-sizing:border-box;">
+          <input type="password" id="signup-password" placeholder="Password (min. 6 chars)" style="width:100%;padding:12px;margin-bottom:24px;border:1px solid var(--gray-300);border-radius:8px;font-size:16px;box-sizing:border-box;">
+          <button onclick="handleSignUp()" style="width:100%;padding:12px;background:var(--blue-600);color:white;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;margin-bottom:12px;">Create Account</button>
+          <p style="color:var(--gray-500);margin-bottom:8px;">Already have an account?</p>
+          <button onclick="switchAuthTab('login')" style="width:100%;padding:12px;background:var(--gray-100);color:var(--gray-700);border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;">Sign In</button>
+          <div id="signup-error" style="color:var(--red-600);margin-top:16px;font-size:14px;display:none;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-home">
     <!-- Header -->
     <div class="home-header">
       <p class="home-time" id="home-time">9:41</p>
@@ -236,7 +266,7 @@
           <h2 id="profile-name">-</h2>
           <p id="profile-email-hero">-</p>
         </div>
-        <button class="edit-btn">
+        <button class="edit-btn" onclick="openEditProfileModal()">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         </button>
       </div>
@@ -272,8 +302,8 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue-900)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
             Emergency Contacts
           </div>
-          <button style="background:none;border:none;cursor:pointer;color:var(--gray-500);">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          <button onclick="openAddContactModal()" style="background:none;border:none;cursor:pointer;color:var(--gray-500);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           </button>
         </div>
         <div class="card-content" style="display:flex;flex-direction:column;gap:8px;padding-top:0;" id="profile-ec-list"></div>
@@ -286,10 +316,93 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
             <span>Settings</span>
           </button>
-          <button class="profile-action-row danger">
+          <button class="profile-action-row danger" onclick="handleLogOut()">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
             <span>Log Out</span>
           </button>
+        </div>
+      </div>
+
+      <!-- Edit Profile Modal -->
+      <div id="edit-profile-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:flex-end;">
+        <div style="background:white;border-radius:16px 16px 0 0;width:100%;padding:24px;max-height:90vh;overflow-y:auto;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+            <h2 style="margin:0;font-size:20px;">Edit Profile</h2>
+            <button onclick="closeEditProfileModal()" style="background:none;border:none;font-size:24px;cursor:pointer;">×</button>
+          </div>
+          
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div>
+              <label style="font-size:14px;color:var(--gray-700);display:block;margin-bottom:4px;">Full Name</label>
+              <input type="text" id="edit-nama" placeholder="Full Name" style="width:100%;padding:12px;border:1px solid var(--gray-300);border-radius:8px;font-size:16px;box-sizing:border-box;">
+            </div>
+            <div>
+              <label style="font-size:14px;color:var(--gray-700);display:block;margin-bottom:4px;">Email</label>
+              <input type="email" id="edit-email" placeholder="Email" style="width:100%;padding:12px;border:1px solid var(--gray-300);border-radius:8px;font-size:16px;box-sizing:border-box;">
+            </div>
+            <div>
+              <label style="font-size:14px;color:var(--gray-700);display:block;margin-bottom:4px;">Phone</label>
+              <input type="tel" id="edit-telepon" placeholder="Phone" style="width:100%;padding:12px;border:1px solid var(--gray-300);border-radius:8px;font-size:16px;box-sizing:border-box;">
+            </div>
+            <div>
+              <label style="font-size:14px;color:var(--gray-700);display:block;margin-bottom:4px;">Address</label>
+              <input type="text" id="edit-alamat" placeholder="Address" style="width:100%;padding:12px;border:1px solid var(--gray-300);border-radius:8px;font-size:16px;box-sizing:border-box;">
+            </div>
+            <div>
+              <label style="font-size:14px;color:var(--gray-700);display:block;margin-bottom:4px;">NIK</label>
+              <input type="text" id="edit-nik" placeholder="NIK" style="width:100%;padding:12px;border:1px solid var(--gray-300);border-radius:8px;font-size:16px;box-sizing:border-box;">
+            </div>
+            <div>
+              <label style="font-size:14px;color:var(--gray-700);display:block;margin-bottom:4px;">Blood Type</label>
+              <select id="edit-golongan_darah" style="width:100%;padding:12px;border:1px solid var(--gray-300);border-radius:8px;font-size:16px;box-sizing:border-box;">
+                <option value="">Select blood type</option>
+                <option value="O+">O+</option>
+                <option value="O-">O-</option>
+                <option value="A+">A+</option>
+                <option value="A-">A-</option>
+                <option value="B+">B+</option>
+                <option value="B-">B-</option>
+                <option value="AB+">AB+</option>
+                <option value="AB-">AB-</option>
+              </select>
+            </div>
+            <button onclick="saveProfileChanges()" style="width:100%;padding:12px;background:var(--blue-600);color:white;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;margin-top:12px;">Save Changes</button>
+            <div id="edit-profile-error" style="color:var(--red-600);font-size:14px;display:none;margin-top:8px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Emergency Contact Modal -->
+      <div id="contact-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:flex-end;">
+        <div style="background:white;border-radius:16px 16px 0 0;width:100%;padding:24px;max-height:90vh;overflow-y:auto;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+            <h2 style="margin:0;font-size:20px;" id="contact-modal-title">Add Emergency Contact</h2>
+            <button onclick="closeContactModal()" style="background:none;border:none;font-size:24px;cursor:pointer;">×</button>
+          </div>
+          
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div>
+              <label style="font-size:14px;color:var(--gray-700);display:block;margin-bottom:4px;">Name</label>
+              <input type="text" id="contact-nama" placeholder="Contact name" style="width:100%;padding:12px;border:1px solid var(--gray-300);border-radius:8px;font-size:16px;box-sizing:border-box;">
+            </div>
+            <div>
+              <label style="font-size:14px;color:var(--gray-700);display:block;margin-bottom:4px;">Relationship</label>
+              <select id="contact-label" style="width:100%;padding:12px;border:1px solid var(--gray-300);border-radius:8px;font-size:16px;box-sizing:border-box;">
+                <option value="Keluarga">Keluarga</option>
+                <option value="Keluarga utama">Keluarga utama</option>
+                <option value="Saudara">Saudara</option>
+                <option value="Teman">Teman</option>
+                <option value="Kolega">Kolega</option>
+                <option value="Dokter">Dokter</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:14px;color:var(--gray-700);display:block;margin-bottom:4px;">Phone Number</label>
+              <input type="tel" id="contact-telepon" placeholder="Phone number" style="width:100%;padding:12px;border:1px solid var(--gray-300);border-radius:8px;font-size:16px;box-sizing:border-box;">
+            </div>
+            <button onclick="saveContactChanges()" style="width:100%;padding:12px;background:var(--blue-600);color:white;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;margin-top:12px;">Save Contact</button>
+            <div id="contact-error" style="color:var(--red-600);font-size:14px;display:none;margin-top:8px;"></div>
+          </div>
         </div>
       </div>
 

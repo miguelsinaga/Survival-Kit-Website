@@ -5,6 +5,131 @@ let sosActive = false;
 let kitTab = "checklist"; 
 let suppliesSubTab = "first_aid";
 
+// Authentication functions
+async function checkSession() {
+  const sessionId = API.getSessionId();
+  if (!sessionId) {
+    console.log("No session ID, redirecting to auth");
+    switchTab("auth");
+    switchAuthTab("login");
+    return false;
+  }
+  
+  try {
+    const user = await API.get("/api/me");
+    if (!user || user.error) {
+      console.log("Invalid user response", user);
+      API.setSessionId(null);
+      switchTab("auth");
+      switchAuthTab("login");
+      return false;
+    }
+    
+    console.log("User logged in:", user);
+    switchTab("home");
+    return true;
+  } catch (err) {
+    console.error("checkSession error:", err);
+    API.setSessionId(null);
+    switchTab("auth");
+    switchAuthTab("login");
+    return false;
+  }
+}
+
+function switchAuthTab(tab) {
+  document.getElementById("auth-login").style.display = tab === "login" ? "block" : "none";
+  document.getElementById("auth-signup").style.display = tab === "signup" ? "block" : "none";
+  
+  // Clear error messages
+  document.getElementById("login-error").innerHTML = "";
+  document.getElementById("signup-error").innerHTML = "";
+  
+  // Clear input fields
+  document.getElementById("login-email").value = "";
+  document.getElementById("login-password").value = "";
+  document.getElementById("signup-name").value = "";
+  document.getElementById("signup-email").value = "";
+  document.getElementById("signup-password").value = "";
+}
+
+async function handleSignIn() {
+  const email = document.getElementById("login-email").value.trim();
+  const password = document.getElementById("login-password").value;
+  const errorEl = document.getElementById("login-error");
+  
+  if (!email || !password) {
+    errorEl.textContent = "Email dan password harus diisi";
+    errorEl.style.display = "block";
+    return;
+  }
+  
+  try {
+    const result = await API.post("/api/signin", { email, password });
+    if (result.error) {
+      errorEl.textContent = result.error;
+      errorEl.style.display = "block";
+      return;
+    }
+    
+    API.setSessionId(result.sessionId);
+    switchTab("home");
+  } catch (err) {
+    errorEl.textContent = "Terjadi kesalahan. Silakan coba lagi.";
+    errorEl.style.display = "block";
+  }
+}
+
+async function handleSignUp() {
+  const nama = document.getElementById("signup-name").value.trim();
+  const email = document.getElementById("signup-email").value.trim();
+  const password = document.getElementById("signup-password").value;
+  const errorEl = document.getElementById("signup-error");
+  
+  if (!nama || !email || !password) {
+    errorEl.textContent = "Semua field harus diisi";
+    errorEl.style.display = "block";
+    return;
+  }
+  
+  if (password.length < 6) {
+    errorEl.textContent = "Password minimal 6 karakter";
+    errorEl.style.display = "block";
+    return;
+  }
+  
+  try {
+    const result = await API.post("/api/signup", { email, password, nama });
+    if (result.error) {
+      errorEl.textContent = result.error;
+      errorEl.style.display = "block";
+      return;
+    }
+    
+    API.setSessionId(result.sessionId);
+    switchTab("home");
+  } catch (err) {
+    errorEl.textContent = "Terjadi kesalahan. Silakan coba lagi.";
+    errorEl.style.display = "block";
+  }
+}
+
+async function handleLogOut() {
+  const sessionId = API.getSessionId();
+  if (sessionId) {
+    await API.post("/api/signout", {});
+  }
+  
+  API.setSessionId(null);
+  switchTab("auth");
+  switchAuthTab("login");
+}
+
+// Initialize app on page load
+document.addEventListener("DOMContentLoaded", () => {
+  checkSession();
+});
+
 function switchTab(tab) {
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
   document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
@@ -14,6 +139,9 @@ function switchTab(tab) {
   if (navBtn) navBtn.classList.add("active");
   window.scrollTo(0, 0);
 
+  // Don't load data for auth screens
+  if (tab === "auth") return;
+  
   if (tab === "home")    loadHome();
   if (tab === "kit")     loadKit();
   if (tab === "sos")     loadSOS();
@@ -408,16 +536,183 @@ async function loadProfile() {
   document.getElementById("p-email").textContent = profile.email || "-";
   document.getElementById("p-address").textContent = profile.alamat || "-";
 
-  const ecList = document.getElementById("profile-ec-list");
-  ecList.innerHTML = contacts.map(c => `
-    <div class="profile-ec-row">
-      <div>
-        <h4>${c.nama}</h4>
-        <p>${c.label}</p>
+  // Load emergency contacts with edit/delete buttons
+  await loadEmergencyContacts();
+}
+
+function openEditProfileModal() {
+  const profile = appData.profile || {};
+  document.getElementById("edit-nama").value = profile.nama || "";
+  document.getElementById("edit-email").value = profile.email || "";
+  document.getElementById("edit-telepon").value = profile.telepon || "";
+  document.getElementById("edit-alamat").value = profile.alamat || "";
+  document.getElementById("edit-nik").value = profile.nik || "";
+  document.getElementById("edit-golongan_darah").value = profile.golongan_darah || "";
+  document.getElementById("edit-profile-error").style.display = "none";
+  document.getElementById("edit-profile-modal").style.display = "flex";
+}
+
+function closeEditProfileModal() {
+  document.getElementById("edit-profile-modal").style.display = "none";
+}
+
+async function saveProfileChanges() {
+  const nama = document.getElementById("edit-nama").value.trim();
+  const email = document.getElementById("edit-email").value.trim();
+  const telepon = document.getElementById("edit-telepon").value.trim();
+  const alamat = document.getElementById("edit-alamat").value.trim();
+  const nik = document.getElementById("edit-nik").value.trim();
+  const golongan_darah = document.getElementById("edit-golongan_darah").value;
+  const errorEl = document.getElementById("edit-profile-error");
+
+  if (!nama || !email) {
+    errorEl.textContent = "Name and email are required";
+    errorEl.style.display = "block";
+    return;
+  }
+
+  try {
+    const result = await API.put("/api/profile", {
+      nama,
+      email,
+      telepon,
+      alamat,
+      nik,
+      golongan_darah
+    });
+
+    if (result.error) {
+      errorEl.textContent = result.error;
+      errorEl.style.display = "block";
+      return;
+    }
+
+    // Update appData
+    appData.profile = { nama, email, telepon, alamat, nik, golongan_darah };
+    
+    // Refresh profile display
+    await loadProfile();
+    
+    // Close modal
+    closeEditProfileModal();
+  } catch (err) {
+    errorEl.textContent = "Failed to save profile. Please try again.";
+    errorEl.style.display = "block";
+  }
+}
+
+// Emergency Contact Functions
+let editingContactId = null;
+
+function openAddContactModal() {
+  editingContactId = null;
+  document.getElementById("contact-modal-title").textContent = "Add Emergency Contact";
+  document.getElementById("contact-nama").value = "";
+  document.getElementById("contact-label").value = "Keluarga";
+  document.getElementById("contact-telepon").value = "";
+  document.getElementById("contact-error").innerHTML = "";
+  document.getElementById("contact-modal").style.display = "flex";
+}
+
+function openEditContactModal(id, nama, label, telepon) {
+  editingContactId = id;
+  document.getElementById("contact-modal-title").textContent = "Edit Emergency Contact";
+  document.getElementById("contact-nama").value = nama;
+  document.getElementById("contact-label").value = label;
+  document.getElementById("contact-telepon").value = telepon;
+  document.getElementById("contact-error").innerHTML = "";
+  document.getElementById("contact-modal").style.display = "flex";
+}
+
+function closeContactModal() {
+  document.getElementById("contact-modal").style.display = "none";
+  editingContactId = null;
+}
+
+async function saveContactChanges() {
+  const nama = document.getElementById("contact-nama").value.trim();
+  const label = document.getElementById("contact-label").value;
+  const telepon = document.getElementById("contact-telepon").value.trim();
+  const errorEl = document.getElementById("contact-error");
+
+  if (!nama || !telepon) {
+    errorEl.textContent = "Name and phone are required";
+    errorEl.style.display = "block";
+    return;
+  }
+
+  try {
+    if (editingContactId) {
+      // Update existing contact
+      const result = await API.put(`/api/contacts/${editingContactId}`, {
+        nama,
+        label,
+        telepon
+      });
+      if (result.error) {
+        errorEl.textContent = result.error;
+        errorEl.style.display = "block";
+        return;
+      }
+    } else {
+      // Add new contact
+      const result = await API.post("/api/contacts", {
+        nama,
+        label,
+        telepon
+      });
+      if (result.error) {
+        errorEl.textContent = result.error;
+        errorEl.style.display = "block";
+        return;
+      }
+    }
+
+    // Reload contacts
+    await loadEmergencyContacts();
+    closeContactModal();
+  } catch (err) {
+    errorEl.textContent = "Failed to save contact. Please try again.";
+    errorEl.style.display = "block";
+  }
+}
+
+async function deleteContact(id) {
+  if (!confirm("Delete this contact?")) return;
+  
+  try {
+    await API.delete(`/api/contacts/${id}`);
+    await loadEmergencyContacts();
+  } catch (err) {
+    alert("Failed to delete contact");
+  }
+}
+
+async function loadEmergencyContacts() {
+  try {
+    const contacts = await API.get("/api/contacts");
+    const container = document.getElementById("profile-ec-list");
+    
+    if (!contacts || contacts.length === 0) {
+      container.innerHTML = '<p style="color:var(--gray-500);font-size:14px;">No emergency contacts yet</p>';
+      return;
+    }
+    
+    container.innerHTML = contacts.map(c => `
+      <div class="info-row2" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+        <div style="flex:1;">
+          <p style="margin:0;font-weight:600;color:var(--gray-900);">${c.nama}</p>
+          <p style="margin:0;font-size:13px;color:var(--gray-500);">${c.label} • ${c.telepon}</p>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="openEditContactModal(${c.id}, '${c.nama.replace(/'/g, "\\'")}', '${c.label.replace(/'/g, "\\'")}', '${c.telepon.replace(/'/g, "\\'")}')" style="background:none;border:none;color:var(--blue-600);cursor:pointer;font-size:13px;padding:4px 8px;">Edit</button>
+          <button onclick="deleteContact(${c.id})" style="background:none;border:none;color:var(--red-600);cursor:pointer;font-size:13px;padding:4px 8px;">Delete</button>
+        </div>
       </div>
-      <span style="font-size:13px;color:var(--gray-600);">${c.telepon}</span>
-    </div>
-  `).join("");
+    `).join("");
+  } catch (err) {
+    console.error("Failed to load emergency contacts:", err);
+  }
 }
 
 function svgCheckCircle(color = "#fff") {
@@ -504,7 +799,3 @@ function formatDateTime(dtStr) {
   if (diff === 1) return "Kemarin, " + time;
   return diff + " hari lalu";
 }
-
-document.addEventListener("DOMContentLoaded", () => {
-  switchTab("home");
-});
