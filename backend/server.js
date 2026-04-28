@@ -135,7 +135,7 @@ async function main() {
 
   app.get("*", (req, res) => { res.sendFile(path.join(__dirname,"..","frontend","index.html")); });
 
-  app.listen(PORT, () => { console.log(`\n  🎒 PrepKit berjalan di http://localhost:${PORT}\n`); });
+  app.listen(PORT, () => { console.log(`\n  Web berjalan di http://localhost:${PORT}\n`); });
 }
 
 main().catch(err => { console.error("Failed to start:", err); process.exit(1); });
