@@ -261,7 +261,7 @@ function renderDocuments(docs) {
       : `<div class="doc-icon-wrap">${svgFileText()}</div>`;
     const actionHtml = isDone
       ? `<span class="check-done">${svgCheckCircle2()}</span>`
-      : `<label class="doc-camera-btn">${svgCamera()} Foto<input type="file" accept="image/*" capture="environment" style="display:none" onchange="handleDocUpload(this,${d.id})"></label>`;
+      : `<button class="doc-camera-btn" onclick="openDocUpload(${d.id})">${svgCamera()} Foto</button>`;
     return `
       <div class="doc-row">
         <div class="doc-row-left">${iconHtml}<span>${d.nama}</span></div>
@@ -282,7 +282,20 @@ async function handleDocUpload(input, docId) {
     if (onProfile) loadProfile(); else loadSupplies();
   };
   reader.readAsDataURL(file);
-  setTimeout(() => { input.value = ""; }, 0);
+  input.value = "";
+}
+
+function openDocUpload(docId) {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.capture = 'environment';
+  input.onchange = function(e) {
+    if (this.files && this.files[0]) {
+      handleDocUpload(this, docId);
+    }
+  };
+  input.click();
 }
 
 async function deleteDocPhoto(docId) {
@@ -633,9 +646,9 @@ function renderProfileDocuments(docs) {
         </div>
         <div style="display:flex;gap:6px;">
           ${isDone
-            ? `<label class="doc-camera-btn" style="background:var(--gray-200);color:var(--gray-600);" title="Ganti foto">${svgCamera()}<input type="file" accept="image/*" capture="environment" style="display:none" onchange="handleDocUpload(this,${d.id})"></label>
+            ? `<button class="doc-camera-btn" style="background:var(--gray-200);color:var(--gray-600);" title="Ganti foto" onclick="openDocUpload(${d.id})">${svgCamera()}</button>
                <button class="doc-camera-btn" style="background:var(--red-100);color:var(--red-600);" onclick="deleteDocPhoto(${d.id})" title="Hapus foto">✕</button>`
-            : `<label class="doc-camera-btn">${svgCamera()} Foto<input type="file" accept="image/*" capture="environment" style="display:none" onchange="handleDocUpload(this,${d.id})"></label>`}
+            : `<button class="doc-camera-btn" onclick="openDocUpload(${d.id})">${svgCamera()} Foto</button>`}
         </div>
       </div>`;
   }).join("");
