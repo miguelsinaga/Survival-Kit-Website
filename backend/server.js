@@ -248,8 +248,8 @@ app.post("/api/signup", async (req, res) => {
     }
 
     for (const d of [
-      ["KTP / ID", "tersimpan", "2026-04-29"], ["Passport", "tersimpan", "2026-04-29"],
-      ["Asuransi", "tersimpan", "2026-04-29"], ["Dokumen Lainnya", "tersimpan", "2026-04-29"],
+      ["KTP / ID", "belum", null], ["Passport", "belum", null],
+      ["Asuransi", "belum", null], ["Dokumen Lainnya", "belum", null],
     ]) {
       await run("INSERT INTO documents (user_id,nama,status,tanggal) VALUES ($1,$2,$3,$4)", [newUser.id, ...d]);
     }
