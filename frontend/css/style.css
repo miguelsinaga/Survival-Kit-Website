@@ -187,7 +187,7 @@ body {
   display: flex; align-items: center; gap: 5px;
   background: var(--blue-600); color: white; border: none;
   border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 600;
-  cursor: pointer; white-space: nowrap;
+  cursor: pointer; white-space: nowrap; user-select: none;
 }
 .doc-camera-btn svg { width: 13px; height: 13px; }
 .doc-thumb { width: 36px; height: 36px; border-radius: 8px; overflow: hidden; flex-shrink: 0; }

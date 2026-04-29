@@ -261,7 +261,7 @@ function renderDocuments(docs) {
       : `<div class="doc-icon-wrap">${svgFileText()}</div>`;
     const actionHtml = isDone
       ? `<span class="check-done">${svgCheckCircle2()}</span>`
-      : `<button class="doc-camera-btn" onclick="openDocCamera(${d.id})">${svgCamera()} Foto</button>`;
+      : `<label class="doc-camera-btn">${svgCamera()} Foto<input type="file" accept="image/*" capture="environment" style="display:none" onchange="handleDocUpload(this,${d.id})"></label>`;
     return `
       <div class="doc-row">
         <div class="doc-row-left">${iconHtml}<span>${d.nama}</span></div>
@@ -270,30 +270,18 @@ function renderDocuments(docs) {
   }).join("");
 }
 
-function openDocCamera(docId) {
-  const input = document.createElement("input");
-  input.type = "file";
-  input.accept = "image/*";
-  input.capture = "environment";
-  input.style.display = "none";
-  document.body.appendChild(input);
-
-  input.addEventListener("change", async function () {
-    if (!this.files || !this.files[0]) { document.body.removeChild(input); return; }
-    const file = this.files[0];
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      localStorage.setItem("doc-photo-" + docId, e.target.result);
-      const today = new Date().toISOString().slice(0, 10);
-      await API.put("/api/documents/" + docId, { status: "tersimpan", tanggal: today });
-      if (document.body.contains(input)) document.body.removeChild(input);
-      const onProfile = document.getElementById("screen-profile").classList.contains("active");
-      if (onProfile) loadProfile(); else loadSupplies();
-    };
-    reader.readAsDataURL(file);
-  });
-
-  input.click();
+async function handleDocUpload(input, docId) {
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    localStorage.setItem("doc-photo-" + docId, e.target.result);
+    const today = new Date().toISOString().slice(0, 10);
+    await API.put("/api/documents/" + docId, { status: "tersimpan", tanggal: today });
+    const onProfile = document.getElementById("screen-profile").classList.contains("active");
+    if (onProfile) loadProfile(); else loadSupplies();
+  };
+  reader.readAsDataURL(file);
 }
 
 async function deleteDocPhoto(docId) {
@@ -644,9 +632,9 @@ function renderProfileDocuments(docs) {
         </div>
         <div style="display:flex;gap:6px;">
           ${isDone
-            ? `<button class="doc-camera-btn" style="background:var(--gray-200);color:var(--gray-600);" onclick="openDocCamera(${d.id})" title="Ganti foto">${svgCamera()}</button>
+            ? `<label class="doc-camera-btn" style="background:var(--gray-200);color:var(--gray-600);" title="Ganti foto">${svgCamera()}<input type="file" accept="image/*" capture="environment" style="display:none" onchange="handleDocUpload(this,${d.id})"></label>
                <button class="doc-camera-btn" style="background:var(--red-100);color:var(--red-600);" onclick="deleteDocPhoto(${d.id})" title="Hapus foto">✕</button>`
-            : `<button class="doc-camera-btn" onclick="openDocCamera(${d.id})">${svgCamera()} Foto</button>`}
+            : `<label class="doc-camera-btn">${svgCamera()} Foto<input type="file" accept="image/*" capture="environment" style="display:none" onchange="handleDocUpload(this,${d.id})"></label>`}
         </div>
       </div>`;
   }).join("");
