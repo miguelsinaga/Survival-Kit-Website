@@ -147,9 +147,9 @@ async function initDB() {
     }
 
     for (const d of [
-      ["KTP / ID", "tersimpan", "2025-01-12"],
-      ["Passport", "tersimpan", "2024-03-03"],
-      ["Asuransi", "tersimpan", "2024-09-07"],
+      ["KTP / ID", "belum", null],
+      ["Passport", "belum", null],
+      ["Asuransi", "belum", null],
       ["Dokumen Lainnya", "belum", null],
     ]) {
       await run("INSERT INTO documents (user_id,nama,status,tanggal) VALUES ($1,$2,$3,$4)", [userId, ...d]);

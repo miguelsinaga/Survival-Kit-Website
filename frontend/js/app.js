@@ -273,18 +273,23 @@ function renderDocuments(docs) {
 async function handleDocUpload(input, docId) {
   if (!input.files || !input.files[0]) return;
   const file = input.files[0];
+  console.log("handleDocUpload called with docId:", docId, "file:", file.name, file.size);
   input.value = "";
   const reader = new FileReader();
   reader.onload = async (e) => {
     try {
+      console.log("FileReader onload triggered, dataURL length:", e.target.result.length);
       localStorage.setItem("doc-photo-" + docId, e.target.result);
       const today = new Date().toISOString().slice(0, 10);
+      console.log("Calling API PUT /api/documents/" + docId, "with status: tersimpan, tanggal:", today);
       const result = await API.put("/api/documents/" + docId, { status: "tersimpan", tanggal: today });
+      console.log("API response:", result);
       if (result.error) {
         console.error("Upload error:", result.error);
         alert("Gagal upload dokumen. Silakan coba lagi.");
         return;
       }
+      console.log("Upload successful, reloading UI");
       const onProfile = document.getElementById("screen-profile").classList.contains("active");
       if (onProfile) loadProfile(); else loadSupplies();
     } catch (err) {
