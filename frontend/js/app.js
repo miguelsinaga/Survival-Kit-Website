@@ -128,6 +128,9 @@ async function handleLogOut() {
 // Initialize app on page load
 document.addEventListener("DOMContentLoaded", () => {
   checkSession();
+  document.getElementById("doc-camera-input").addEventListener("change", function () {
+    handleDocPhoto(this);
+  });
 });
 
 function switchTab(tab) {
@@ -269,7 +272,7 @@ function renderDocuments(docs) {
         <div class="doc-row-left">${iconHtml}<span>${d.nama}</span></div>
         ${actionHtml}
       </div>`;
-  }).join("") + `<input type="file" id="doc-camera-input" accept="image/*" capture="environment" style="display:none" onchange="handleDocPhoto(this)">`;
+  }).join("");
 }
 
 function openDocCamera(docId) {
@@ -548,9 +551,10 @@ function dismissAlert(id) {
 }
 
 async function loadProfile() {
-  const [profile, contacts] = await Promise.all([
+  const [profile, contacts, docs] = await Promise.all([
     API.get("/api/profile"),
     API.get("/api/contacts"),
+    API.get("/api/documents"),
   ]);
   appData.profile = profile;
   appData.contacts = contacts;
@@ -562,8 +566,35 @@ async function loadProfile() {
   document.getElementById("p-email").textContent = profile.email || "-";
   document.getElementById("p-address").textContent = profile.alamat || "-";
 
-  // Load emergency contacts with edit/delete buttons
+  renderProfileDocuments(docs);
   await loadEmergencyContacts();
+}
+
+function renderProfileDocuments(docs) {
+  const container = document.getElementById("profile-docs-list");
+  if (!docs || docs.length === 0) {
+    container.innerHTML = `<div style="text-align:center;padding:12px;color:var(--gray-400);font-size:13px;">Tidak ada dokumen</div>`;
+    return;
+  }
+  container.innerHTML = docs.map(d => {
+    const photo = localStorage.getItem("doc-photo-" + d.id);
+    const isDone = d.status === "tersimpan";
+    return `
+      <div class="doc-row" ${!isDone ? `onclick="switchTab('kit')" style="cursor:pointer;"` : ""}>
+        <div class="doc-row-left">
+          ${photo
+            ? `<div class="doc-thumb"><img src="${photo}" alt="${d.nama}"></div>`
+            : `<div class="doc-icon-wrap">${svgFileText()}</div>`}
+          <div>
+            <div style="font-size:13px;font-weight:500;color:var(--gray-700);">${d.nama}</div>
+            <div style="font-size:11px;color:${isDone ? "var(--green-600)" : "var(--gray-400)"};">
+              ${isDone ? "Tersimpan" + (d.tanggal ? " · " + d.tanggal : "") : "Belum difoto — tap untuk upload"}
+            </div>
+          </div>
+        </div>
+        ${isDone ? `<span class="check-done">${svgCheckCircle2()}</span>` : `<span style="font-size:18px;">📷</span>`}
+      </div>`;
+  }).join("");
 }
 
 function openEditProfileModal() {
