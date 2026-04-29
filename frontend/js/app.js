@@ -271,30 +271,45 @@ function renderDocuments(docs) {
 }
 
 async function handleDocUpload(input, docId) {
-  if (!input.files || !input.files[0]) return;
+  console.log("handleDocUpload called for docId:", docId);
+  if (!input.files || !input.files[0]) {
+    console.log("handleDocUpload: No file selected, exiting.");
+    return;
+  }
   const file = input.files[0];
+  console.log("handleDocUpload: File selected:", file.name);
   const reader = new FileReader();
   reader.onload = async (e) => {
+    console.log("handleDocUpload: FileReader onload event.");
     localStorage.setItem("doc-photo-" + docId, e.target.result);
     const today = new Date().toISOString().slice(0, 10);
     await API.put("/api/documents/" + docId, { status: "tersimpan", tanggal: today });
+    console.log("handleDocUpload: API call finished. Reloading data.");
     const onProfile = document.getElementById("screen-profile").classList.contains("active");
     if (onProfile) loadProfile(); else loadSupplies();
+  };
+  reader.onerror = (e) => {
+    console.error("handleDocUpload: FileReader error:", e);
   };
   reader.readAsDataURL(file);
   input.value = "";
 }
 
 function openDocUpload(docId) {
+  console.log("openDocUpload called for docId:", docId);
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = 'image/*';
   input.capture = 'environment';
   input.onchange = function(e) {
+    console.log("input.onchange event fired.");
     if (this.files && this.files[0]) {
       handleDocUpload(this, docId);
+    } else {
+      console.log("input.onchange: No files found on input.");
     }
   };
+  console.log("Programmatically clicking input element.");
   input.click();
 }
 
