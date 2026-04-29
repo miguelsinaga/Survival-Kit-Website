@@ -128,8 +128,20 @@ async function handleLogOut() {
 // Initialize app on page load
 document.addEventListener("DOMContentLoaded", () => {
   checkSession();
-  document.getElementById("doc-camera-input").addEventListener("change", function () {
-    handleDocPhoto(this);
+  document.getElementById("doc-camera-input").addEventListener("change", async function () {
+    const docId = parseInt(this.dataset.docId);
+    if (!this.files || !this.files[0] || !docId) return;
+    const file = this.files[0];
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      localStorage.setItem("doc-photo-" + docId, e.target.result);
+      const today = new Date().toISOString().slice(0, 10);
+      await API.put("/api/documents/" + docId, { status: "tersimpan", tanggal: today });
+      const onProfile = document.getElementById("screen-profile").classList.contains("active");
+      if (onProfile) loadProfile();
+      else loadSupplies();
+    };
+    reader.readAsDataURL(file);
   });
 });
 
@@ -250,8 +262,6 @@ async function loadSupplies() {
   renderTools(tools);
 }
 
-let currentDocId = null;
-
 function renderDocuments(docs) {
   const container = document.getElementById("acc-body-docs");
   const statusEl  = document.getElementById("acc-docs-status");
@@ -276,22 +286,10 @@ function renderDocuments(docs) {
 }
 
 function openDocCamera(docId) {
-  currentDocId = docId;
   const input = document.getElementById("doc-camera-input");
+  input.dataset.docId = docId;
   input.value = "";
   input.click();
-}
-
-function handleDocPhoto(input) {
-  if (!input.files || !input.files[0] || !currentDocId) return;
-  const reader = new FileReader();
-  reader.onload = async (e) => {
-    localStorage.setItem("doc-photo-" + currentDocId, e.target.result);
-    const today = new Date().toISOString().slice(0, 10);
-    await API.put("/api/documents/" + currentDocId, { status: "tersimpan", tanggal: today });
-    loadSupplies();
-  };
-  reader.readAsDataURL(input.files[0]);
 }
 
 function renderFirstAid(items, medicine) {
@@ -579,22 +577,37 @@ function renderProfileDocuments(docs) {
   container.innerHTML = docs.map(d => {
     const photo = localStorage.getItem("doc-photo-" + d.id);
     const isDone = d.status === "tersimpan";
+    const iconHtml = photo
+      ? `<div class="doc-thumb" onclick="viewDocPhoto('${d.nama}',${d.id})" style="cursor:pointer;">${`<img src="${photo}" alt="${d.nama}">`}</div>`
+      : `<div class="doc-icon-wrap">${svgFileText()}</div>`;
     return `
-      <div class="doc-row" ${!isDone ? `onclick="switchTab('kit')" style="cursor:pointer;"` : ""}>
+      <div class="doc-row">
         <div class="doc-row-left">
-          ${photo
-            ? `<div class="doc-thumb"><img src="${photo}" alt="${d.nama}"></div>`
-            : `<div class="doc-icon-wrap">${svgFileText()}</div>`}
+          ${iconHtml}
           <div>
             <div style="font-size:13px;font-weight:500;color:var(--gray-700);">${d.nama}</div>
             <div style="font-size:11px;color:${isDone ? "var(--green-600)" : "var(--gray-400)"};">
-              ${isDone ? "Tersimpan" + (d.tanggal ? " · " + d.tanggal : "") : "Belum difoto — tap untuk upload"}
+              ${isDone ? "Tersimpan" + (d.tanggal ? " · " + d.tanggal : "") : "Belum difoto"}
             </div>
           </div>
         </div>
-        ${isDone ? `<span class="check-done">${svgCheckCircle2()}</span>` : `<span style="font-size:18px;">📷</span>`}
+        ${isDone
+          ? `<button class="doc-camera-btn" style="background:var(--gray-200);color:var(--gray-600);" onclick="openDocCamera(${d.id})">${svgCamera()}</button>`
+          : `<button class="doc-camera-btn" onclick="openDocCamera(${d.id})">${svgCamera()} Foto</button>`}
       </div>`;
   }).join("");
+}
+
+function viewDocPhoto(nama, docId) {
+  const photo = localStorage.getItem("doc-photo-" + docId);
+  if (!photo) return;
+  const overlay = document.createElement("div");
+  overlay.style.cssText = "position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);z-index:2000;display:flex;flex-direction:column;align-items:center;justify-content:center;";
+  overlay.innerHTML = `
+    <div style="color:white;font-size:16px;font-weight:600;margin-bottom:16px;">${nama}</div>
+    <img src="${photo}" style="max-width:90%;max-height:75vh;border-radius:8px;object-fit:contain;">
+    <button onclick="this.parentElement.remove()" style="margin-top:20px;padding:10px 28px;background:white;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;">Tutup</button>`;
+  document.body.appendChild(overlay);
 }
 
 function openEditProfileModal() {
