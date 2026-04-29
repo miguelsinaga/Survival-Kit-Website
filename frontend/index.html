@@ -191,30 +191,29 @@
 
     <div class="page-content" style="padding-top:0;">
       <div class="card">
-        <button class="quick-row" onclick="alert('Location sharing toggled!')">
+        <button class="quick-row" onclick="toggleLocationSharing()">
           <div class="quick-row-left">
             <div class="quick-icon">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue-600)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
             </div>
             <div>
-              <h4>Live Location Sharing</h4>
-              <p id="sos-loc-status">Off</p>
+              <h4>Live Location</h4>
+              <p id="sos-loc-status">Tap untuk dapatkan lokasi</p>
             </div>
           </div>
           <svg class="chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gray-400)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
         </button>
-        <button class="quick-row" onclick="switchTab('profile')">
-          <div class="quick-row-left">
-            <div class="quick-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue-600)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            </div>
-            <div>
-              <h4>Emergency Contacts</h4>
-              <p id="sos-contact-count">-</p>
-            </div>
+        <div id="sos-location-detail" style="display:none;padding:8px 16px 12px;border-top:1px solid var(--gray-100);"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header" style="padding-bottom:8px;">
+          <div class="card-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue-900)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Emergency Contacts
           </div>
-          <svg class="chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gray-400)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-        </button>
+        </div>
+        <div id="sos-contacts-list" class="card-content" style="padding-top:0;display:flex;flex-direction:column;gap:0;"></div>
       </div>
     </div>
   </div>
@@ -422,9 +421,6 @@
       </div>
     </div>
   </div>
-
-  <!-- File input permanen untuk foto dokumen -->
-  <input type="file" id="doc-camera-input" accept="image/*" capture="environment" style="display:none">
 
   <nav class="nav">
     <button class="nav-item active" id="nav-home" onclick="switchTab('home')">

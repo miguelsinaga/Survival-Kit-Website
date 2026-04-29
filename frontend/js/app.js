@@ -128,21 +128,6 @@ async function handleLogOut() {
 // Initialize app on page load
 document.addEventListener("DOMContentLoaded", () => {
   checkSession();
-  document.getElementById("doc-camera-input").addEventListener("change", async function () {
-    const docId = parseInt(this.dataset.docId);
-    if (!this.files || !this.files[0] || !docId) return;
-    const file = this.files[0];
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      localStorage.setItem("doc-photo-" + docId, e.target.result);
-      const today = new Date().toISOString().slice(0, 10);
-      await API.put("/api/documents/" + docId, { status: "tersimpan", tanggal: today });
-      const onProfile = document.getElementById("screen-profile").classList.contains("active");
-      if (onProfile) loadProfile();
-      else loadSupplies();
-    };
-    reader.readAsDataURL(file);
-  });
 });
 
 function switchTab(tab) {
@@ -286,10 +271,35 @@ function renderDocuments(docs) {
 }
 
 function openDocCamera(docId) {
-  const input = document.getElementById("doc-camera-input");
-  input.dataset.docId = docId;
-  input.value = "";
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "image/*";
+  input.capture = "environment";
+  input.style.display = "none";
+  document.body.appendChild(input);
+
+  input.addEventListener("change", async function () {
+    if (!this.files || !this.files[0]) { document.body.removeChild(input); return; }
+    const file = this.files[0];
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      localStorage.setItem("doc-photo-" + docId, e.target.result);
+      const today = new Date().toISOString().slice(0, 10);
+      await API.put("/api/documents/" + docId, { status: "tersimpan", tanggal: today });
+      if (document.body.contains(input)) document.body.removeChild(input);
+      const onProfile = document.getElementById("screen-profile").classList.contains("active");
+      if (onProfile) loadProfile(); else loadSupplies();
+    };
+    reader.readAsDataURL(file);
+  });
+
   input.click();
+}
+
+async function deleteDocPhoto(docId) {
+  localStorage.removeItem("doc-photo-" + docId);
+  await API.put("/api/documents/" + docId, { status: "belum", tanggal: null });
+  loadProfile();
 }
 
 function renderFirstAid(items, medicine) {
@@ -383,12 +393,53 @@ async function runReadinessCheck() {
 
 function loadSOS() {
   API.get("/api/contacts").then(contacts => {
-    document.getElementById("sos-contact-count").textContent = contacts.length + " contacts";
-  });
-  API.get("/api/settings/location_sharing").then(s => {
-    document.getElementById("sos-loc-status").textContent = s.value === "true" ? "On" : "Off";
+    const container = document.getElementById("sos-contacts-list");
+    if (!container) return;
+    if (!contacts || contacts.length === 0) {
+      container.innerHTML = `<div style="padding:12px;font-size:13px;color:var(--gray-400);text-align:center;">Belum ada kontak darurat</div>`;
+      return;
+    }
+    container.innerHTML = contacts.map((c, i) => `
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 0;${i > 0 ? "border-top:1px solid var(--gray-100);" : ""}">
+        <div style="width:24px;height:24px;border-radius:50%;background:var(--blue-100);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--blue-600);flex-shrink:0;">${i + 1}</div>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:600;color:var(--gray-800);">${c.nama}</div>
+          <div style="font-size:11px;color:var(--gray-500);">${c.label} · ${c.telepon}</div>
+        </div>
+        <a href="tel:${c.telepon}" style="padding:6px 12px;background:var(--green-600);color:white;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;">Call</a>
+      </div>
+    `).join("");
   });
   updateSOSUI();
+}
+
+function toggleLocationSharing() {
+  const statusEl = document.getElementById("sos-loc-status");
+  const detailEl = document.getElementById("sos-location-detail");
+  if (!navigator.geolocation) {
+    statusEl.textContent = "GPS tidak didukung perangkat ini";
+    return;
+  }
+  statusEl.textContent = "Mendapatkan lokasi...";
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const lat = pos.coords.latitude.toFixed(6);
+      const lng = pos.coords.longitude.toFixed(6);
+      const mapsUrl = `https://maps.google.com/?q=${lat},${lng}`;
+      statusEl.textContent = `${lat}, ${lng}`;
+      detailEl.style.display = "block";
+      detailEl.innerHTML = `
+        <div style="font-size:12px;color:var(--gray-500);margin-bottom:8px;">Akurasi: ±${Math.round(pos.coords.accuracy)}m</div>
+        <div style="display:flex;gap:8px;">
+          <a href="${mapsUrl}" target="_blank" style="flex:1;padding:8px;background:var(--blue-600);color:white;border-radius:8px;font-size:13px;font-weight:600;text-align:center;text-decoration:none;">Buka Maps</a>
+          <button onclick="navigator.clipboard.writeText('${mapsUrl}').then(()=>alert('Link lokasi tersalin!'))" style="flex:1;padding:8px;background:var(--gray-100);color:var(--gray-700);border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">Salin Link</button>
+        </div>`;
+    },
+    (err) => {
+      statusEl.textContent = "Gagal: " + (err.code === 1 ? "Izin ditolak" : "Tidak dapat mendapatkan lokasi");
+    },
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
 }
 
 function handleSOSPress() {
@@ -591,9 +642,12 @@ function renderProfileDocuments(docs) {
             </div>
           </div>
         </div>
-        ${isDone
-          ? `<button class="doc-camera-btn" style="background:var(--gray-200);color:var(--gray-600);" onclick="openDocCamera(${d.id})">${svgCamera()}</button>`
-          : `<button class="doc-camera-btn" onclick="openDocCamera(${d.id})">${svgCamera()} Foto</button>`}
+        <div style="display:flex;gap:6px;">
+          ${isDone
+            ? `<button class="doc-camera-btn" style="background:var(--gray-200);color:var(--gray-600);" onclick="openDocCamera(${d.id})" title="Ganti foto">${svgCamera()}</button>
+               <button class="doc-camera-btn" style="background:var(--red-100);color:var(--red-600);" onclick="deleteDocPhoto(${d.id})" title="Hapus foto">✕</button>`
+            : `<button class="doc-camera-btn" onclick="openDocCamera(${d.id})">${svgCamera()} Foto</button>`}
+        </div>
       </div>`;
   }).join("");
 }
