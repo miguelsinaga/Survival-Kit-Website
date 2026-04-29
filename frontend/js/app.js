@@ -247,22 +247,48 @@ async function loadSupplies() {
   renderTools(tools);
 }
 
+let currentDocId = null;
+
 function renderDocuments(docs) {
-  const docIcons = [svgFileText(), svgFileText(), svgFileText(), svgFileText(), svgFileText()];
   const container = document.getElementById("acc-body-docs");
   const statusEl  = document.getElementById("acc-docs-status");
   const done = docs.filter(d => d.status === "tersimpan").length;
   statusEl.textContent = done + " dari " + docs.length + " tersimpan";
 
-  container.innerHTML = docs.map(d => `
-    <div class="doc-row">
-      <div class="doc-row-left">
-        <div class="doc-icon-wrap">${svgFileText()}</div>
-        <span>${d.nama}</span>
-      </div>
-      ${d.status === "tersimpan" ? `<span class="check-done">${svgCheckCircle2()}</span>` : `<span style="font-size:12px;color:var(--gray-400)">—</span>`}
-    </div>
-  `).join("") + `<div style="padding-top:12px;"><button class="btn-primary" onclick="alert('Cloud backup coming soon!')">Backup to Cloud</button></div>`;
+  container.innerHTML = docs.map(d => {
+    const isDone = d.status === "tersimpan";
+    const photo = localStorage.getItem("doc-photo-" + d.id);
+    const iconHtml = photo
+      ? `<div class="doc-thumb"><img src="${photo}" alt="${d.nama}"></div>`
+      : `<div class="doc-icon-wrap">${svgFileText()}</div>`;
+    const actionHtml = isDone
+      ? `<span class="check-done">${svgCheckCircle2()}</span>`
+      : `<button class="doc-camera-btn" onclick="openDocCamera(${d.id})">${svgCamera()} Foto</button>`;
+    return `
+      <div class="doc-row">
+        <div class="doc-row-left">${iconHtml}<span>${d.nama}</span></div>
+        ${actionHtml}
+      </div>`;
+  }).join("") + `<input type="file" id="doc-camera-input" accept="image/*" capture="environment" style="display:none" onchange="handleDocPhoto(this)">`;
+}
+
+function openDocCamera(docId) {
+  currentDocId = docId;
+  const input = document.getElementById("doc-camera-input");
+  input.value = "";
+  input.click();
+}
+
+function handleDocPhoto(input) {
+  if (!input.files || !input.files[0] || !currentDocId) return;
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    localStorage.setItem("doc-photo-" + currentDocId, e.target.result);
+    const today = new Date().toISOString().slice(0, 10);
+    await API.put("/api/documents/" + currentDocId, { status: "tersimpan", tanggal: today });
+    loadSupplies();
+  };
+  reader.readAsDataURL(input.files[0]);
 }
 
 function renderFirstAid(items, medicine) {
@@ -774,6 +800,9 @@ function svgLogout() {
 }
 function svgEdit() {
   return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+}
+function svgCamera() {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
 }
 
 function alertIcon(type) {

@@ -183,6 +183,15 @@ body {
 .doc-icon-wrap svg { width: 16px; height: 16px; color: var(--blue-600); }
 .doc-row span { font-size: 13px; font-weight: 500; color: var(--gray-700); }
 .doc-row .check-done svg { width: 18px; height: 18px; color: var(--green-600); }
+.doc-camera-btn {
+  display: flex; align-items: center; gap: 5px;
+  background: var(--blue-600); color: white; border: none;
+  border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 600;
+  cursor: pointer; white-space: nowrap;
+}
+.doc-camera-btn svg { width: 13px; height: 13px; }
+.doc-thumb { width: 36px; height: 36px; border-radius: 8px; overflow: hidden; flex-shrink: 0; }
+.doc-thumb img { width: 100%; height: 100%; object-fit: cover; }
 
 .btn-primary {
   width: 100%; padding: 15px; background: var(--blue-900); color: #fff;
