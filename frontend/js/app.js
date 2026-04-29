@@ -278,15 +278,55 @@ async function handleDocUpload(input, docId) {
   }
   const file = input.files[0];
   console.log("handleDocUpload: File selected:", file.name);
+
   const reader = new FileReader();
-  reader.onload = async (e) => {
-    console.log("handleDocUpload: FileReader onload event.");
-    localStorage.setItem("doc-photo-" + docId, e.target.result);
-    const today = new Date().toISOString().slice(0, 10);
-    await API.put("/api/documents/" + docId, { status: "tersimpan", tanggal: today });
-    console.log("handleDocUpload: API call finished. Reloading data.");
-    const onProfile = document.getElementById("screen-profile").classList.contains("active");
-    if (onProfile) loadProfile(); else loadSupplies();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = async () => {
+      const MAX_WIDTH = 1024;
+      const MAX_HEIGHT = 1024;
+      let width = img.width;
+      let height = img.height;
+
+      if (width > height) {
+        if (width > MAX_WIDTH) {
+          height *= MAX_WIDTH / width;
+          width = MAX_WIDTH;
+        }
+      } else {
+        if (height > MAX_HEIGHT) {
+          width *= MAX_HEIGHT / height;
+          height = MAX_HEIGHT;
+        }
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // Get the data-URL formatted string
+      const dataUrl = canvas.toDataURL(file.type, 0.8); // 0.8 is the quality level
+
+      console.log("handleDocUpload: FileReader onload event (after compression).");
+      try {
+        localStorage.setItem("doc-photo-" + docId, dataUrl);
+      } catch (error) {
+        console.error("Error saving to localStorage:", error);
+        if (error.name === 'QuotaExceededError') {
+          alert("Penyimpanan browser penuh. Coba hapus beberapa foto dokumen lain atau bersihkan cache browser.");
+        }
+        return;
+      }
+      
+      const today = new Date().toISOString().slice(0, 10);
+      await API.put("/api/documents/" + docId, { status: "tersimpan", tanggal: today });
+      console.log("handleDocUpload: API call finished. Reloading data.");
+      const onProfile = document.getElementById("screen-profile").classList.contains("active");
+      if (onProfile) loadProfile(); else loadSupplies();
+    };
+    img.src = e.target.result;
   };
   reader.onerror = (e) => {
     console.error("handleDocUpload: FileReader error:", e);
