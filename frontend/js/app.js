@@ -282,6 +282,7 @@ async function handleDocUpload(input, docId) {
     if (onProfile) loadProfile(); else loadSupplies();
   };
   reader.readAsDataURL(file);
+  input.value = "";
 }
 
 async function deleteDocPhoto(docId) {
