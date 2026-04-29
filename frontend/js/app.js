@@ -273,16 +273,30 @@ function renderDocuments(docs) {
 async function handleDocUpload(input, docId) {
   if (!input.files || !input.files[0]) return;
   const file = input.files[0];
+  input.value = "";
   const reader = new FileReader();
   reader.onload = async (e) => {
-    localStorage.setItem("doc-photo-" + docId, e.target.result);
-    const today = new Date().toISOString().slice(0, 10);
-    await API.put("/api/documents/" + docId, { status: "tersimpan", tanggal: today });
-    const onProfile = document.getElementById("screen-profile").classList.contains("active");
-    if (onProfile) loadProfile(); else loadSupplies();
+    try {
+      localStorage.setItem("doc-photo-" + docId, e.target.result);
+      const today = new Date().toISOString().slice(0, 10);
+      const result = await API.put("/api/documents/" + docId, { status: "tersimpan", tanggal: today });
+      if (result.error) {
+        console.error("Upload error:", result.error);
+        alert("Gagal upload dokumen. Silakan coba lagi.");
+        return;
+      }
+      const onProfile = document.getElementById("screen-profile").classList.contains("active");
+      if (onProfile) loadProfile(); else loadSupplies();
+    } catch (err) {
+      console.error("Error in handleDocUpload:", err);
+      alert("Terjadi kesalahan saat upload. Silakan coba lagi.");
+    }
+  };
+  reader.onerror = (err) => {
+    console.error("FileReader error:", err);
+    alert("Gagal membaca file. Silakan coba lagi.");
   };
   reader.readAsDataURL(file);
-  input.value = "";
 }
 
 async function deleteDocPhoto(docId) {
